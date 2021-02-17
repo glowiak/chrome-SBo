@@ -1,0 +1,36 @@
+#!/bin/sh
+PRGNAM=GoogleChrome
+VERSION=${VERSION:-88.0.4324.182}
+BRANCH=stable
+BUILD=${BUILD:-1}
+TAG=${TAG:-_SBo}
+
+ARCH=x86_64
+
+CWD=$(pwd)
+TMP=${TMP:-/tmp/SBo}
+PKG=$TMP/package-$PRGNAM
+OUTPUT=${OUTPUT:-/tmp}
+
+set -e
+
+rm -rf $PKG
+mkdir -p $TMP $PKG $OUTPUT
+cd $CWD
+curl -L -o chromian.rpm https://dl.google.com/linux/chrome/rpm/stable/x86_64/google-chrome-stable-${VERSION}-1.x86_64.rpm
+cd $PKG
+bsdtar xf ${CWD}/chromian.rpm
+cd $CWD
+rm chromian.rpm
+
+find $PKG -print0 | xargs -0 file | grep -e "executable" -e "shared object" | grep ELF \
+  | cut -f 1 -d : | xargs strip --strip-unneeded 2> /dev/null || true
+
+mkdir -p $PKG/usr/doc/$PRGNAM-$VERSION
+cat $CWD/$PRGNAM.SlackBuild > $PKG/usr/doc/$PRGNAM-$VERSION/$PRGNAM.SlackBuild
+
+mkdir -p $PKG/install
+cat $CWD/slack-desc > $PKG/install/slack-desc
+
+cd $PKG
+/sbin/makepkg -l y -c n $OUTPUT/$PRGNAM-$VERSION-$ARCH-$BUILD$TAG.${PKGTYPE:-tgz}
